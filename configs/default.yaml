@@ -1,0 +1,68 @@
+# Default configuration for archaeological artifact dataset generation
+
+# Paths (override these on command line or in script)
+model_dir: ./models
+output_dir: ./output
+
+# Generation settings
+num_images: 10000
+random_seed: 42
+
+# Logging
+# Logs are automatically created in <output_dir>/logs/<run_type>_<timestamp>/
+# Each run creates:
+#   - generation.log or preview.log (detailed execution log)
+#   - run_metadata.json (configuration and parameters used)
+#   - generation_summary.json or preview_summary.json (performance statistics)
+
+# Camera settings - nadir/near-nadir overhead photography
+camera:
+  nadir_angle_range: [0, 15]  # degrees from vertical (0 = pure nadir)
+  orbit_angles: 8  # number of camera positions around scene
+  distance_range: [0.8, 1.5]  # camera distance from center (meters)
+  resolution: [1920, 1080]  # output resolution
+  focal_length: 50.0  # focal length in mm
+
+# Physics simulation
+physics:
+  enabled: true
+  drop_height: 0.2  # meters
+  simulation_steps: 100
+  gravity: [0, 0, -9.81]
+  friction: 0.5
+  restitution: 0.3  # bounciness
+
+# Lighting randomization
+lighting:
+  num_lights: [2, 4]  # range of number of lights
+  intensity_range: [20, 80]  # Watts - appropriate for indoor artifact photography
+  color_temp_range: [3000, 6500]  # Kelvin
+  use_hdri: false
+
+# Background/drawer settings
+background:
+  use_drawer_texture: true
+  randomize_color: true
+  color_variation: 0.2
+  base_color: [0.8, 0.75, 0.7]  # RGB - light wood color
+
+# Rendering settings
+rendering:
+  engine: CYCLES  # CYCLES or EEVEE
+  samples: 128
+  max_bounces: 4
+  use_denoising: true
+  use_gpu: true
+
+# 3D model settings
+models:
+  max_per_scene: 100
+  min_per_scene: 1
+  scale_range: [0.8, 1.2]
+  randomize_rotation: true
+
+# Dataset split
+dataset:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15

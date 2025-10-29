@@ -1,0 +1,114 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# Type checkers / Linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytype/
+
+# Testing
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+*.cover
+*.py,cover
+nosetests.xml
+coverage.xml
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# BlenderProc cache
+blender/
+resources/
+
+# Output directories - generated datasets
+output/
+test_output/
+annotation_test_output/
+gpu_sample_output/
+*_output/
+preview/
+
+# Generated images (but keep documentation images)
+*.jpg
+*.png
+*.jpeg
+*.gif
+*.bmp
+!docs/**/*.jpg
+!docs/**/*.png
+!docs/**/*.jpeg
+!docs/**/*.gif
+
+# YOLO labels and logs (generated during dataset creation)
+# These are outputs, not source files
+*.txt
+!requirements*.txt
+!README.txt
+!LICENSE.txt
+!CHANGELOG.txt
+!docs/**/*.txt
+
+# Log files
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Models (large binary files - users provide their own)
+models/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*~.nib
+*.orig

@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blender-synth"
+version = "0.1.0"
+description = "BlenderProc-based synthetic dataset generator for archaeological artifact detection"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["blender", "synthetic-data", "object-detection", "archaeology", "computer-vision"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "blenderproc>=2.7.0",
+    "numpy>=1.24.0",
+    "opencv-python>=4.7.0",
+    "Pillow>=9.5.0",
+    "PyYAML>=6.0",
+    "tqdm>=4.65.0",
+    "pydantic>=2.0.0",
+    "scipy>=1.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.3.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.3.0",
+    "isort>=5.12.0",
+    "mypy>=1.3.0",
+    "flake8>=6.0.0",
+]
+
+[project.scripts]
+blender-synth = "blender_synth.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/blender-synth"
+Repository = "https://github.com/yourusername/blender-synth"
+
+[tool.setuptools]
+packages = ["blender_synth"]
+
+[tool.setuptools.package-data]
+blender_synth = ["py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

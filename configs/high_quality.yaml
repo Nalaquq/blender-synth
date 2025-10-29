@@ -1,0 +1,52 @@
+# High quality configuration - for final dataset generation
+
+model_dir: ./models
+output_dir: ./output_hq
+
+num_images: 1000
+random_seed: 42
+
+camera:
+  nadir_angle_range: [0, 20]  # wider angle range
+  orbit_angles: 12  # more viewpoints
+  distance_range: [0.7, 1.6]
+  resolution: [2560, 1440]  # high resolution
+  focal_length: 50.0
+
+physics:
+  enabled: true
+  drop_height: 0.3
+  simulation_steps: 150  # more steps for accuracy
+  gravity: [0, 0, -9.81]
+  friction: 0.5
+  restitution: 0.3
+
+lighting:
+  num_lights: [3, 5]
+  intensity_range: [30, 100]  # Appropriate for indoor artifact photography
+  color_temp_range: [2800, 7000]  # wider range
+  use_hdri: false
+
+background:
+  use_drawer_texture: true
+  randomize_color: true
+  color_variation: 0.25
+  base_color: [0.8, 0.75, 0.7]
+
+rendering:
+  engine: CYCLES
+  samples: 256  # high sample count
+  max_bounces: 8
+  use_denoising: true
+  use_gpu: true
+
+models:
+  max_per_scene: 8
+  min_per_scene: 2
+  scale_range: [0.7, 1.3]
+  randomize_rotation: true
+
+dataset:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15

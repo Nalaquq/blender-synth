@@ -1,0 +1,52 @@
+# Fast preview configuration - optimized for quick testing
+
+model_dir: ./models
+output_dir: ./output_preview
+
+num_images: 20
+random_seed: 42
+
+camera:
+  nadir_angle_range: [0, 10]
+  orbit_angles: 4  # fewer angles for speed
+  distance_range: [1.0, 1.2]
+  resolution: [1280, 720]  # lower resolution
+  focal_length: 50.0
+
+physics:
+  enabled: true
+  drop_height: 0.2
+  simulation_steps: 50  # fewer steps
+  gravity: [0, 0, -9.81]
+  friction: 0.5
+  restitution: 0.3
+
+lighting:
+  num_lights: [2, 3]
+  intensity_range: [20, 60]  # Lower intensity for indoor scenes
+  color_temp_range: [4000, 5500]
+  use_hdri: false
+
+background:
+  use_drawer_texture: true
+  randomize_color: true
+  color_variation: 0.15
+  base_color: [0.8, 0.75, 0.7]
+
+rendering:
+  engine: EEVEE  # faster than CYCLES
+  samples: 32  # fewer samples
+  max_bounces: 2
+  use_denoising: true
+  use_gpu: true
+
+models:
+  max_per_scene: 3
+  min_per_scene: 1
+  scale_range: [0.9, 1.1]
+  randomize_rotation: true
+
+dataset:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15

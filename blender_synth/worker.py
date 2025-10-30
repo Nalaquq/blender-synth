@@ -25,14 +25,14 @@ def main():
     parser.add_argument("--config", type=Path, help="Path to YAML configuration file")
     parser.add_argument("--models", type=Path, help="Directory containing 3D models")
     parser.add_argument("--output", type=Path, help="Output directory for dataset")
-    parser.add_argument("--num-images", type=int, default=100, help="Number of images to generate")
-    parser.add_argument("--camera-angles", type=int, default=8, help="Number of camera orbit positions")
-    parser.add_argument("--max-objects", type=int, default=5, help="Maximum objects per scene")
-    parser.add_argument("--resolution", type=int, nargs=2, default=[1920, 1080], help="Image resolution")
-    parser.add_argument("--seed", type=int, help="Random seed for reproducibility")
+    parser.add_argument("--num-images", type=int, default=None, help="Number of images to generate")
+    parser.add_argument("--camera-angles", type=int, default=None, help="Number of camera orbit positions")
+    parser.add_argument("--max-objects", type=int, default=None, help="Maximum objects per scene")
+    parser.add_argument("--resolution", type=int, nargs=2, default=None, help="Image resolution")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
     parser.add_argument("--no-physics", action="store_true", help="Disable physics simulation")
-    parser.add_argument("--engine", choices=["CYCLES", "EEVEE"], default="CYCLES", help="Rendering engine")
-    parser.add_argument("--samples", type=int, default=128, help="Number of render samples")
+    parser.add_argument("--engine", choices=["CYCLES", "EEVEE"], default=None, help="Rendering engine")
+    parser.add_argument("--samples", type=int, default=None, help="Number of render samples")
 
     args = parser.parse_args()
 
@@ -66,8 +66,26 @@ def generate_command(args: argparse.Namespace, logger) -> int:
     if args.config:
         logger.info(f"Loading configuration from {args.config}")
         config = GenerationConfig.from_yaml(args.config)
+
+        # Apply command-line overrides only if explicitly provided
+        if args.num_images is not None:
+            config.num_images = args.num_images
+        if args.seed is not None:
+            config.random_seed = args.seed
+        if args.camera_angles is not None:
+            config.camera.orbit_angles = args.camera_angles
+        if args.resolution is not None:
+            config.camera.resolution = tuple(args.resolution)
+        if args.max_objects is not None:
+            config.models.max_per_scene = args.max_objects
+        if args.no_physics:
+            config.physics.enabled = False
+        if args.engine is not None:
+            config.rendering.engine = args.engine
+        if args.samples is not None:
+            config.rendering.samples = args.samples
     else:
-        # Create from command-line arguments
+        # Create from command-line arguments (use defaults if not provided)
         if not args.models or not args.output:
             logger.error("--models and --output are required when not using --config")
             return 1
@@ -75,17 +93,17 @@ def generate_command(args: argparse.Namespace, logger) -> int:
         config = GenerationConfig(
             model_dir=args.models,
             output_dir=args.output,
-            num_images=args.num_images,
+            num_images=args.num_images if args.num_images is not None else 100,
             random_seed=args.seed,
         )
 
-        # Update with command-line overrides
-        config.camera.orbit_angles = args.camera_angles
-        config.camera.resolution = tuple(args.resolution)
-        config.models.max_per_scene = args.max_objects
+        # Update with command-line arguments or defaults
+        config.camera.orbit_angles = args.camera_angles if args.camera_angles is not None else 8
+        config.camera.resolution = tuple(args.resolution) if args.resolution is not None else (1920, 1080)
+        config.models.max_per_scene = args.max_objects if args.max_objects is not None else 5
         config.physics.enabled = not args.no_physics
-        config.rendering.engine = args.engine
-        config.rendering.samples = args.samples
+        config.rendering.engine = args.engine if args.engine is not None else "CYCLES"
+        config.rendering.samples = args.samples if args.samples is not None else 128
 
     # Create log directory for this run
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

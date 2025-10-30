@@ -84,12 +84,32 @@ class CameraOrbit:
         self.camera_poses = poses
         return poses
 
+    def clear_camera_poses(self) -> None:
+        """Clear all camera poses to prevent accumulation across scenes."""
+        import bpy
+
+        # Get the camera object
+        if hasattr(bpy.context.scene, 'camera') and bpy.context.scene.camera:
+            camera = bpy.context.scene.camera
+
+            # Clear animation data (keyframes) from the camera
+            if camera.animation_data:
+                camera.animation_data_clear()
+
+            # Reset frame range to start fresh
+            bpy.context.scene.frame_start = 0
+            bpy.context.scene.frame_end = 0
+            bpy.context.scene.frame_set(0)
+
     def set_camera_pose(self, pose: np.ndarray) -> None:
         """Set camera to a specific pose.
 
         Args:
             pose: 4x4 transformation matrix
         """
+        # Clear existing poses before adding new one to avoid accumulation
+        self.clear_camera_poses()
+
         # Convert to BlenderProc format and set
         bproc.camera.add_camera_pose(pose)
 

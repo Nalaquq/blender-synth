@@ -77,42 +77,42 @@ Examples:
         "--config", type=Path, help="Path to YAML configuration file"
     )
     generate_parser.add_argument(
-        "--num-images", type=int, default=100, help="Number of images to generate"
+        "--num-images", type=int, default=None, help="Number of images to generate (overrides config)"
     )
     generate_parser.add_argument(
         "--camera-angles",
         type=int,
-        default=8,
-        help="Number of camera orbit positions",
+        default=None,
+        help="Number of camera orbit positions (overrides config)",
     )
     generate_parser.add_argument(
         "--max-objects",
         type=int,
-        default=5,
-        help="Maximum objects per scene",
+        default=None,
+        help="Maximum objects per scene (overrides config)",
     )
     generate_parser.add_argument(
         "--resolution",
         type=int,
         nargs=2,
-        default=[1920, 1080],
+        default=None,
         metavar=("WIDTH", "HEIGHT"),
-        help="Image resolution",
+        help="Image resolution (overrides config)",
     )
     generate_parser.add_argument(
-        "--seed", type=int, help="Random seed for reproducibility"
+        "--seed", type=int, default=None, help="Random seed for reproducibility (overrides config)"
     )
     generate_parser.add_argument(
-        "--no-physics", action="store_true", help="Disable physics simulation"
+        "--no-physics", action="store_true", help="Disable physics simulation (overrides config)"
     )
     generate_parser.add_argument(
         "--engine",
         choices=["CYCLES", "EEVEE"],
-        default="CYCLES",
-        help="Rendering engine",
+        default=None,
+        help="Rendering engine (overrides config)",
     )
     generate_parser.add_argument(
-        "--samples", type=int, default=128, help="Number of render samples"
+        "--samples", type=int, default=None, help="Number of render samples (overrides config)"
     )
 
     # Preview command
@@ -174,28 +174,28 @@ def generate_command(args: argparse.Namespace, logger) -> int:
     worker_script = Path(__file__).parent / "worker.py"
     cmd = ["blenderproc", "run", str(worker_script), "--command", "generate"]
 
-    # Add all arguments
+    # Add all arguments (only pass if explicitly set to avoid overriding config defaults)
     if args.config:
         cmd.extend(["--config", str(args.config)])
     if args.models:
         cmd.extend(["--models", str(args.models)])
     if args.output:
         cmd.extend(["--output", str(args.output)])
-    if args.num_images:
+    if args.num_images is not None:
         cmd.extend(["--num-images", str(args.num_images)])
-    if args.camera_angles:
+    if args.camera_angles is not None:
         cmd.extend(["--camera-angles", str(args.camera_angles)])
-    if args.max_objects:
+    if args.max_objects is not None:
         cmd.extend(["--max-objects", str(args.max_objects)])
-    if args.resolution:
+    if args.resolution is not None:
         cmd.extend(["--resolution", str(args.resolution[0]), str(args.resolution[1])])
-    if args.seed:
+    if args.seed is not None:
         cmd.extend(["--seed", str(args.seed)])
     if args.no_physics:
         cmd.append("--no-physics")
-    if args.engine:
+    if args.engine is not None:
         cmd.extend(["--engine", args.engine])
-    if args.samples:
+    if args.samples is not None:
         cmd.extend(["--samples", str(args.samples)])
 
     # Execute blenderproc

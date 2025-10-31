@@ -1,5 +1,6 @@
 """Scene setup and management using BlenderProc."""
 
+import gc
 import blenderproc as bproc
 import numpy as np
 import logging
@@ -68,10 +69,52 @@ class SceneManager:
         return self._using_gpu
 
     def clear_scene(self) -> None:
-        """Clear all objects from the scene."""
+        """Clear all objects from the scene and clean up Blender data blocks."""
+        import bpy
+
         # Remove all mesh objects
         for obj in bproc.object.get_all_mesh_objects():
             obj.delete()
+
+        # Clean up orphaned Blender data blocks to prevent memory leaks
+        # This is critical when generating thousands of images
+        self._cleanup_blender_data()
+
+        # Force garbage collection to free memory immediately
+        gc.collect()
+
+    def _cleanup_blender_data(self) -> None:
+        """Clean up orphaned Blender data blocks to prevent memory leaks.
+
+        When objects are deleted, their associated data (meshes, materials, textures, images)
+        may remain in Blender's memory. This method removes orphaned data blocks.
+        """
+        import bpy
+
+        # Clean up orphaned meshes
+        for mesh in bpy.data.meshes:
+            if mesh.users == 0:
+                bpy.data.meshes.remove(mesh)
+
+        # Clean up orphaned materials
+        for material in bpy.data.materials:
+            if material.users == 0:
+                bpy.data.materials.remove(material)
+
+        # Clean up orphaned textures
+        for texture in bpy.data.textures:
+            if texture.users == 0:
+                bpy.data.textures.remove(texture)
+
+        # Clean up orphaned images (textures often reference images)
+        for image in bpy.data.images:
+            if image.users == 0:
+                bpy.data.images.remove(image)
+
+        # Clean up orphaned node groups (shader nodes can create these)
+        for node_group in bpy.data.node_groups:
+            if node_group.users == 0:
+                bpy.data.node_groups.remove(node_group)
 
     def create_drawer_surface(self) -> bproc.types.MeshObject:
         """Create a table/drawer surface for objects to rest on.

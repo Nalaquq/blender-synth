@@ -6,6 +6,7 @@ This directory contains test scripts for the blender-synth package.
 
 ### Unit/Integration Tests
 - `test_generation.py` - Main test for complete dataset generation pipeline
+- `test_memory_fix.py` - Memory leak fix verification (100 images with monitoring)
 - `test_annotation_fix.py` - Tests annotation generation with fixes
 - `test_gpu_sample.py` - Tests GPU rendering with sample generation
 
@@ -47,10 +48,23 @@ For a quick functionality test:
 blenderproc run tests/test_generation.py
 ```
 
+### Memory Leak Test
+To verify the memory leak fix with 100 images:
+```bash
+./run_blender_synth.sh tests/test_memory_fix.py
+```
+
+This test will:
+- Generate 100 images
+- Monitor memory usage every 10 images
+- Export memory metrics to CSV
+- Verify memory stays stable (no unbounded growth)
+
 ## Test Output
 Tests generate output in temporary directories that are automatically cleaned up.
 Default output locations:
 - `test_output/` - Main test output (gitignored)
+- `output/memory_test/` - Memory fix test output (gitignored)
 - `annotation_test_output/` - Annotation test output (gitignored)
 - `gpu_sample_output/` - GPU sample output (gitignored)
 

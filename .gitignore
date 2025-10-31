@@ -25,90 +25,37 @@ MANIFEST
 venv/
 ENV/
 env/
-.venv/
 
-# IDEs
+# IDE
 .vscode/
 .idea/
-.claude/
 *.swp
 *.swo
 *~
+.DS_Store
 
-# Type checkers / Linters
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-.pytype/
-
-# Testing
-.pytest_cache/
-.tox/
-.coverage
-.coverage.*
-htmlcov/
-.hypothesis/
-*.cover
-*.py,cover
-nosetests.xml
-coverage.xml
-
-# Jupyter Notebook
-.ipynb_checkpoints/
-*.ipynb_checkpoints
+# User data
+models/
+output/
+preview/
+test_output/
+*.log
 
 # BlenderProc cache
 blender/
-resources/
 
-# Output directories - generated datasets
-output/
-test_output/
-annotation_test_output/
-gpu_sample_output/
-*_output/
-preview/
-
-# Generated images (but keep documentation images)
-*.jpg
-*.png
-*.jpeg
-*.gif
-*.bmp
-!docs/**/*.jpg
-!docs/**/*.png
-!docs/**/*.jpeg
-!docs/**/*.gif
-
-# YOLO labels and logs (generated during dataset creation)
-# These are outputs, not source files
-*.txt
-!requirements*.txt
-!README.txt
-!LICENSE.txt
-!CHANGELOG.txt
-!docs/**/*.txt
-
-# Log files
-*.log
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Models (large binary files - users provide their own)
-models/
-
-# OS specific
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Backup files
+# Temporary files
+*.tmp
 *.bak
-*.backup
-*~.nib
-*.orig
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation builds
+docs/_build/

@@ -1,5 +1,6 @@
 """Lighting randomization for domain randomization."""
 
+import gc
 import numpy as np
 import blenderproc as bproc
 
@@ -23,6 +24,8 @@ class LightingRandomizer:
         for light in self.lights:
             light.delete()
         self.lights = []
+        # Force garbage collection to free light-related memory
+        gc.collect()
 
     def create_random_lights(self, scene_center: np.ndarray = np.array([0, 0, 0.15])) -> None:
         """Create random lighting setup with guaranteed key light for proper shadows.

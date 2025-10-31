@@ -1,5 +1,6 @@
 """Main synthetic data generation pipeline."""
 
+import gc
 import random
 from pathlib import Path
 from typing import List, Optional
@@ -64,6 +65,73 @@ class SyntheticGenerator:
             f"Found {self.model_loader.get_num_classes()} classes with models"
         )
 
+        # Track memory usage
+        self._images_generated = 0
+        self._last_memory_log = 0
+        self._peak_memory_mb = 0
+        self._memory_log_entries = []  # Store memory metrics for CSV export
+
+    def _log_memory_usage(self, force: bool = False) -> None:
+        """Log current memory usage and track peak usage.
+
+        Args:
+            force: Force logging regardless of interval
+        """
+        # Log more frequently for first 100 images to monitor memory leak fix
+        # Then log every 50 images thereafter
+        if self._images_generated < 100:
+            interval = 10
+        else:
+            interval = 50
+
+        # Always track memory even if we don't log it
+        should_log = force or (self._images_generated - self._last_memory_log) >= interval
+
+        try:
+            import psutil
+            import time
+            process = psutil.Process()
+            mem_info = process.memory_info()
+            mem_mb = mem_info.rss / 1024 / 1024
+            mem_gb = mem_mb / 1024
+
+            # Track peak memory
+            if mem_mb > self._peak_memory_mb:
+                self._peak_memory_mb = mem_mb
+
+            # Get Blender's internal data block counts for debugging
+            import bpy
+            mesh_count = len(bpy.data.meshes)
+            material_count = len(bpy.data.materials)
+            texture_count = len(bpy.data.textures)
+            image_count = len(bpy.data.images)
+
+            # Store metrics for CSV export
+            self._memory_log_entries.append({
+                'timestamp': time.time(),
+                'images_generated': self._images_generated,
+                'memory_mb': mem_mb,
+                'memory_gb': mem_gb,
+                'meshes': mesh_count,
+                'materials': material_count,
+                'textures': texture_count,
+                'images': image_count
+            })
+
+            # Log to console and file
+            if should_log:
+                self.logger.info(
+                    f"Memory: {mem_gb:.2f} GB ({mem_mb:.0f} MB) | "
+                    f"Images: {self._images_generated} | "
+                    f"Peak: {self._peak_memory_mb/1024:.2f} GB | "
+                    f"Blender data blocks - Meshes: {mesh_count}, Materials: {material_count}, "
+                    f"Textures: {texture_count}, Images: {image_count}"
+                )
+                self._last_memory_log = self._images_generated
+        except ImportError:
+            # psutil not available, skip memory logging
+            pass
+
     def _create_output_structure(self) -> None:
         """Create output directory structure."""
         for split_dir in [self.train_dir, self.val_dir, self.test_dir]:
@@ -96,6 +164,10 @@ class SyntheticGenerator:
         # NOTE: Segmentation output must be enabled AFTER objects are loaded in each scene
         # See _generate_single_image() for segmentation setup
 
+        # Log initial memory usage as baseline
+        self.logger.info("Initial memory usage:")
+        self._log_memory_usage(force=True)
+
         # Calculate split sizes
         num_train = int(self.config.num_images * self.config.dataset.train_split)
         num_val = int(self.config.num_images * self.config.dataset.val_split)
@@ -121,15 +193,21 @@ class SyntheticGenerator:
 
         # Log completion statistics
         elapsed_time = time.time() - start_time
+
+        # Final memory log
+        self._log_memory_usage(force=True)
+
         self.logger.info(f"=" * 60)
         self.logger.info(f"Generation complete! Dataset saved to {self.output_dir}")
         self.logger.info(f"Total time: {elapsed_time:.2f} seconds ({elapsed_time/60:.2f} minutes)")
         self.logger.info(f"Average time per image: {elapsed_time/self.config.num_images:.2f} seconds")
+        self.logger.info(f"Peak memory usage: {self._peak_memory_mb/1024:.2f} GB ({self._peak_memory_mb:.0f} MB)")
         self.logger.info(f"=" * 60)
 
         # Save generation summary to log directory if available
         if self.log_dir:
             self._save_generation_summary(elapsed_time)
+            self._save_memory_log_csv()
 
     def _generate_split(self, split_name: str, num_images: int, output_dir: Path) -> None:
         """Generate images for a dataset split.
@@ -243,6 +321,9 @@ class SyntheticGenerator:
         # Validate that we got annotations
         if len(annotations) == 0:
             self.logger.warning("No annotations generated - objects not visible in render")
+            # Clean up render data even on failure
+            del data
+            gc.collect()
             return False
 
         # Only save if we have valid annotations
@@ -260,6 +341,16 @@ class SyntheticGenerator:
         self.annotator.save_annotations(annotations, label_path)
 
         self.logger.info(f"Successfully generated {image_name} with {len(annotations)} annotations")
+
+        # Free memory: explicitly delete large render data and force garbage collection
+        del data
+        del image_data
+        gc.collect()
+
+        # Update counter and log memory usage periodically
+        self._images_generated += 1
+        self._log_memory_usage()
+
         return True
 
     def _generate_annotations_from_data(
@@ -520,12 +611,18 @@ class SyntheticGenerator:
             self._generate_single_image(image_name, preview_dir)
 
         elapsed_time = time.time() - start_time
+
+        # Final memory log
+        self._log_memory_usage(force=True)
+
         self.logger.info(f"Preview images saved to {preview_dir}")
         self.logger.info(f"Total time: {elapsed_time:.2f} seconds")
+        self.logger.info(f"Peak memory usage: {self._peak_memory_mb/1024:.2f} GB ({self._peak_memory_mb:.0f} MB)")
 
         # Save preview summary to log directory if available
         if self.log_dir:
             self._save_preview_summary(num_images, elapsed_time)
+            self._save_memory_log_csv()
 
     def _save_generation_summary(self, elapsed_time: float) -> None:
         """Save generation summary to log directory.
@@ -547,6 +644,8 @@ class SyntheticGenerator:
             "avg_time_per_image": elapsed_time / self.config.num_images,
             "device_type": "GPU" if self.scene_manager.is_using_gpu() else "CPU",
             "output_directory": str(self.output_dir),
+            "peak_memory_mb": self._peak_memory_mb,
+            "peak_memory_gb": self._peak_memory_mb / 1024,
         }
 
         summary_path = self.log_dir / "generation_summary.json"
@@ -554,6 +653,27 @@ class SyntheticGenerator:
             json.dump(summary, f, indent=2)
 
         self.logger.info(f"Generation summary saved to {summary_path}")
+
+    def _save_memory_log_csv(self) -> None:
+        """Save detailed memory usage log to CSV file for analysis."""
+        import csv
+
+        if not self._memory_log_entries:
+            self.logger.warning("No memory log entries to save")
+            return
+
+        csv_path = self.log_dir / "memory_usage.csv"
+
+        with open(csv_path, 'w', newline='') as f:
+            fieldnames = ['timestamp', 'images_generated', 'memory_mb', 'memory_gb',
+                         'meshes', 'materials', 'textures', 'images']
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+            writer.writeheader()
+            writer.writerows(self._memory_log_entries)
+
+        self.logger.info(f"Memory usage log saved to {csv_path}")
+        self.logger.info(f"Logged {len(self._memory_log_entries)} memory measurements")
 
     def _save_preview_summary(self, num_images: int, elapsed_time: float) -> None:
         """Save preview summary to log directory.
@@ -572,6 +692,8 @@ class SyntheticGenerator:
             "avg_time_per_image": elapsed_time / num_images if num_images > 0 else 0,
             "device_type": "GPU" if self.scene_manager.is_using_gpu() else "CPU",
             "output_directory": str(self.output_dir),
+            "peak_memory_mb": self._peak_memory_mb,
+            "peak_memory_gb": self._peak_memory_mb / 1024,
         }
 
         summary_path = self.log_dir / "preview_summary.json"

@@ -11,6 +11,8 @@ A BlenderProc-based synthetic dataset generator for training object detection mo
 - **Domain Randomization**: Varied lighting, materials, and backgrounds for robust training
 - **YOLO Format**: Automatic annotation generation in YOLO format
 - **Batch Processing**: Generate thousands of annotated images efficiently
+- **Memory Monitoring**: Real-time memory tracking with CSV logging and peak usage reporting
+- **GPU Acceleration**: CUDA/OptiX support for 10-20x faster rendering
 
 ## Use Case
 
@@ -25,12 +27,21 @@ This tool is designed for generating synthetic training data for detecting archa
 
 Full documentation is available in the [`docs/`](docs/) directory:
 
+### Getting Started
 - **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in minutes
 - **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions
-- **[GPU Setup](docs/GPU_SETUP.md)** - Configure GPU acceleration
+- **[GPU Setup](docs/GPU_SETUP.md)** - Configure GPU acceleration (10-20x speedup)
+
+### Usage & Monitoring
 - **[Usage Guide](docs/USAGE.md)** - Complete usage documentation
+- **[Memory Monitoring](docs/MEMORY_MONITORING.md)** - Track memory usage and prevent OOM crashes
 - **[Logging System](docs/LOGGING.md)** - Understanding logs and debugging
+
+### Reference
+- **[Project Structure](docs/PROJECT_STRUCTURE.md)** - Directory organization and file layout
 - **[Project Summary](docs/PROJECT_SUMMARY.md)** - Architecture and technical details
+- **[Documentation Index](docs/index.md)** - Complete documentation navigation
+- **[Changelog](CHANGELOG.md)** - Recent updates and bug fixes
 
 ## Quick Installation
 
@@ -197,12 +208,36 @@ Set `create_visualizations=True` to automatically generate annotated preview ima
 - Useful for quickly verifying annotation quality
 - Requires `opencv-python` (installed by default)
 
+## Troubleshooting
+
+### Out of Memory (OOM) Crashes
+If generation crashes after 50-100 images:
+- See [Memory Monitoring Guide](docs/MEMORY_MONITORING.md) for detailed analysis
+- Reduce `max_per_scene` in your config (try 15 instead of 30)
+- Lower `rendering.samples` (try 64 instead of 128)
+- Process in smaller batches
+
+### Slow Rendering
+- Enable GPU acceleration: See [GPU Setup Guide](docs/GPU_SETUP.md)
+- Use EEVEE engine for faster previews: `rendering.engine: EEVEE`
+- Reduce samples: `rendering.samples: 32`
+
+### No Objects Visible
+- Check that models are in subdirectories: `models/class_name/*.glb`
+- Verify physics settings aren't too aggressive
+- Review logs in `output/logs/generation_*/generation.log`
+
+For more troubleshooting, see the [Logging Guide](docs/LOGGING.md) and [Memory Monitoring Guide](docs/MEMORY_MONITORING.md).
+
 ## Development
 
 ### Running Tests
 ```bash
 # Run main generation test
 blenderproc run tests/test_generation.py
+
+# Test memory leak fix (100 images with monitoring)
+./run_blender_synth.sh tests/test_memory_fix.py
 
 # Or use the helper script
 ./run_blender_synth.sh tests/test_generation.py
@@ -220,9 +255,18 @@ See `scripts/README.md` for more utility information.
 
 ## Requirements
 
+### Minimum Requirements
 - Python 3.9+
+- 8 GB RAM (for small batches < 1,000 images)
 - BlenderProc (automatically installs Blender)
-- GPU recommended for faster rendering (CUDA/OptiX supported)
+
+### Recommended for Production
+- Python 3.10+
+- 16 GB RAM (for large batches 10,000+ images)
+- NVIDIA GPU with 6+ GB VRAM
+- CUDA 11.8+ / OptiX for GPU rendering (10-20x faster than CPU)
+
+See the [Installation Guide](docs/INSTALLATION.md) for detailed requirements and the [GPU Setup Guide](docs/GPU_SETUP.md) for GPU configuration.
 
 ## License
 

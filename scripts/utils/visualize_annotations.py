@@ -77,24 +77,24 @@ def visualize_yolo_annotations(image_path, annotation_path, output_path, class_n
 
 if __name__ == "__main__":
     # Load class names
-    classes_file = Path("test_output/classes.txt")
+    classes_file = Path("output/classes.txt")
     if classes_file.exists():
         with open(classes_file) as f:
             class_names = [line.strip() for line in f]
     else:
         class_names = None
-    
+
     # Visualize train images
-    output_dir = Path("test_output/visualizations")
+    output_dir = Path("output/visualizations")
     output_dir.mkdir(exist_ok=True)
-    
-    train_images = sorted(Path("test_output/train/images").glob("*.jpg"))
-    train_labels = Path("test_output/train/labels")
-    
+
+    train_images = sorted(Path("output/train/images").glob("*.jpg"))
+    train_labels = Path("output/train/labels")
+
     print(f"Visualizing {len(train_images)} training images...")
     for img_path in train_images:
         label_path = train_labels / f"{img_path.stem}.txt"
         output_path = output_dir / f"{img_path.stem}_annotated.jpg"
         visualize_yolo_annotations(img_path, label_path, output_path, class_names)
-    
+
     print(f"\nVisualizations saved to: {output_dir}")

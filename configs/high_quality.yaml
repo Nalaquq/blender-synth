@@ -1,7 +1,7 @@
 # High quality configuration - for final dataset generation
 
 model_dir: ./models
-output_dir: ./output_hq
+output_dir: ./output
 
 num_images: 1000
 random_seed: 42
@@ -15,7 +15,7 @@ camera:
 
 physics:
   enabled: true
-  drop_height: 0.3
+  drop_height: 0.1
   simulation_steps: 150  # more steps for accuracy
   gravity: [0, 0, -9.81]
   friction: 0.5

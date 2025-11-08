@@ -71,6 +71,39 @@ class SyntheticGenerator:
         self._peak_memory_mb = 0
         self._memory_log_entries = []  # Store memory metrics for CSV export
 
+    def _aggressive_memory_cleanup(self) -> None:
+        """Perform aggressive memory cleanup to prevent accumulation.
+
+        This method clears caches and forces multiple garbage collection passes.
+        Safe for background rendering (no UI operations).
+        """
+        import bpy
+
+        # Clear active object reference
+        try:
+            if bpy.context.view_layer.objects.active:
+                bpy.context.view_layer.objects.active = None
+        except:
+            pass  # May fail in background mode
+
+        # Clear window manager caches if available
+        # Note: Some operations may not work in background mode
+        try:
+            # Try to clear any cached data
+            if hasattr(bpy.data, 'orphans_purge'):
+                # Blender 2.9+ has orphans_purge which safely removes unused data
+                bpy.data.orphans_purge()
+        except:
+            pass
+
+        # Multiple garbage collection passes
+        # First pass: collect objects with circular references
+        gc.collect()
+        # Second pass: collect objects that became eligible after first pass
+        gc.collect()
+        # Third pass: ensure everything is cleaned
+        gc.collect()
+
     def _log_memory_usage(self, force: bool = False) -> None:
         """Log current memory usage and track peak usage.
 
@@ -321,7 +354,17 @@ class SyntheticGenerator:
         # Validate that we got annotations
         if len(annotations) == 0:
             self.logger.warning("No annotations generated - objects not visible in render")
-            # Clean up render data even on failure
+            # Clean up render data even on failure - clear all components
+            if 'colors' in data:
+                del data['colors']
+            if 'normals' in data:
+                del data['normals']
+            if 'depth' in data:
+                del data['depth']
+            if 'instance_segmaps' in data:
+                del data['instance_segmaps']
+            if 'instance_attribute_maps' in data:
+                del data['instance_attribute_maps']
             del data
             gc.collect()
             return False
@@ -343,6 +386,18 @@ class SyntheticGenerator:
         self.logger.info(f"Successfully generated {image_name} with {len(annotations)} annotations")
 
         # Free memory: explicitly delete large render data and force garbage collection
+        # Clear all components of render data dict to ensure no references remain
+        if 'colors' in data:
+            del data['colors']
+        if 'normals' in data:
+            del data['normals']
+        if 'depth' in data:
+            del data['depth']
+        if 'instance_segmaps' in data:
+            del data['instance_segmaps']
+        if 'instance_attribute_maps' in data:
+            del data['instance_attribute_maps']
+
         del data
         del image_data
         gc.collect()
@@ -350,6 +405,10 @@ class SyntheticGenerator:
         # Update counter and log memory usage periodically
         self._images_generated += 1
         self._log_memory_usage()
+
+        # Aggressive memory cleanup every 10 images to prevent accumulation
+        if self._images_generated % 10 == 0:
+            self._aggressive_memory_cleanup()
 
         return True
 

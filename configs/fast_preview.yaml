@@ -1,7 +1,7 @@
 # Fast preview configuration - optimized for quick testing
 
 model_dir: ./models
-output_dir: ./output_preview
+output_dir: ./output
 
 num_images: 20
 random_seed: 42
@@ -15,7 +15,7 @@ camera:
 
 physics:
   enabled: true
-  drop_height: 0.2
+  drop_height: 0.1
   simulation_steps: 50  # fewer steps
   gravity: [0, 0, -9.81]
   friction: 0.5

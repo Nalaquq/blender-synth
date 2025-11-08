@@ -161,6 +161,9 @@ class GenerationConfig(BaseModel):
     random_seed: Optional[int] = Field(
         default=None, description="Random seed for reproducibility"
     )
+    clear_output_dir: bool = Field(
+        default=False, description="Clear output directory before generation. If False, appends to existing dataset."
+    )
     create_visualizations: bool = Field(
         default=False, description="Automatically create annotated visualization images after generation"
     )

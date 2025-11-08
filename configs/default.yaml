@@ -5,8 +5,9 @@ model_dir: ./models
 output_dir: ./output
 
 # Generation settings
-num_images: 10000
+num_images: 10
 random_seed: 42
+clear_output_dir: false  # If true, clears output dir before generation. If false, appends to existing dataset.
 
 # Logging
 # Logs are automatically created in <output_dir>/logs/<run_type>_<timestamp>/
@@ -66,3 +67,7 @@ dataset:
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
+
+# Visualization settings
+visualization:
+  show_bboxes: True  # Enable to visualize bounding box annotations

@@ -55,8 +55,17 @@ class SyntheticGenerator:
         self.val_dir = self.output_dir / "val"
         self.test_dir = self.output_dir / "test"
 
+        # Clear output directory if requested
+        if config.clear_output_dir:
+            self._clear_output_directory()
+
         # Create output structure
         self._create_output_structure()
+
+        # Track starting indices for each split when appending
+        self._train_start_idx = self._get_next_index(self.train_dir / "images", "train")
+        self._val_start_idx = self._get_next_index(self.val_dir / "images", "val")
+        self._test_start_idx = self._get_next_index(self.test_dir / "images", "test")
 
         # Discover models
         self.logger.info(f"Discovering models in {config.model_dir}")
@@ -165,6 +174,53 @@ class SyntheticGenerator:
             # psutil not available, skip memory logging
             pass
 
+    def _clear_output_directory(self) -> None:
+        """Clear the output directory completely."""
+        import shutil
+
+        if self.output_dir.exists():
+            self.logger.info(f"Clearing output directory: {self.output_dir}")
+            shutil.rmtree(self.output_dir)
+            self.logger.info("Output directory cleared")
+
+    def _get_next_index(self, images_dir: Path, split_name: str) -> int:
+        """Get the next available index for image naming when appending.
+
+        Args:
+            images_dir: Directory containing existing images
+            split_name: Name of the split (train/val/test)
+
+        Returns:
+            Next available index to use for image naming
+        """
+        if not images_dir.exists():
+            return 0
+
+        # Find all existing images for this split
+        existing_images = list(images_dir.glob(f"{split_name}_*.jpg"))
+
+        if not existing_images:
+            return 0
+
+        # Extract indices from filenames
+        indices = []
+        for img_path in existing_images:
+            # Filename format: {split_name}_{index:06d}.jpg
+            try:
+                filename = img_path.stem  # Remove .jpg
+                index_str = filename.split('_')[-1]  # Get the last part after underscore
+                indices.append(int(index_str))
+            except (ValueError, IndexError):
+                # Skip files that don't match expected format
+                continue
+
+        if indices:
+            next_idx = max(indices) + 1
+            self.logger.info(f"Appending to existing {split_name} dataset. Starting at index {next_idx}")
+            return next_idx
+
+        return 0
+
     def _create_output_structure(self) -> None:
         """Create output directory structure."""
         for split_dir in [self.train_dir, self.val_dir, self.test_dir]:
@@ -209,9 +265,9 @@ class SyntheticGenerator:
         self.logger.info(f"Dataset split - Train: {num_train}, Val: {num_val}, Test: {num_test}")
 
         # Generate splits
-        self._generate_split("train", num_train, self.train_dir)
-        self._generate_split("val", num_val, self.val_dir)
-        self._generate_split("test", num_test, self.test_dir)
+        self._generate_split("train", num_train, self.train_dir, self._train_start_idx)
+        self._generate_split("val", num_val, self.val_dir, self._val_start_idx)
+        self._generate_split("test", num_test, self.test_dir, self._test_start_idx)
 
         # Save class names
         self._save_class_names()
@@ -242,19 +298,24 @@ class SyntheticGenerator:
             self._save_generation_summary(elapsed_time)
             self._save_memory_log_csv()
 
-    def _generate_split(self, split_name: str, num_images: int, output_dir: Path) -> None:
+    def _generate_split(self, split_name: str, num_images: int, output_dir: Path, start_idx: int = 0) -> None:
         """Generate images for a dataset split.
 
         Args:
             split_name: Name of split (train/val/test)
             num_images: Number of images to generate
             output_dir: Output directory for this split
+            start_idx: Starting index for image naming (for appending to existing dataset)
         """
-        self.logger.info(f"Generating {num_images} images for {split_name} split")
+        if start_idx > 0:
+            self.logger.info(f"Generating {num_images} images for {split_name} split (starting from index {start_idx})")
+        else:
+            self.logger.info(f"Generating {num_images} images for {split_name} split")
 
         for i in tqdm(range(num_images), desc=f"Generating {split_name}"):
-            # Generate single image
-            image_name = f"{split_name}_{i:06d}"
+            # Generate single image with proper index
+            image_idx = start_idx + i
+            image_name = f"{split_name}_{image_idx:06d}"
             self._generate_single_image(image_name, output_dir)
 
     def _generate_single_image(self, image_name: str, output_dir: Path) -> None:

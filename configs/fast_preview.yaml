@@ -5,6 +5,7 @@ output_dir: ./output
 
 num_images: 20
 random_seed: 42
+clear_output_dir: false  # If true, clears output dir before generation. If false, appends to existing dataset.
 
 camera:
   nadir_angle_range: [0, 10]
@@ -50,3 +51,6 @@ dataset:
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
+
+visualization:
+  show_bboxes: false  # Enable to visualize bounding box annotations

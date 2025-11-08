@@ -52,5 +52,5 @@ dataset:
   val_split: 0.15
   test_split: 0.15
 
-visualization:
-  show_bboxes: false  # Enable to visualize bounding box annotations
+# Visualization settings - automatically create annotated images with bounding boxes
+create_visualizations: true
